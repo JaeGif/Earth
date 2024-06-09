@@ -11,7 +11,9 @@ import atmosphereFragmentShader from './shaders/atmosphere/fragment.glsl';
  * Base
  */
 // Debug
-const gui = new GUI();
+
+let gui;
+if (window.location.hash === '#debug') gui = new GUI({ width: 340 });
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl');
@@ -36,25 +38,25 @@ scene.backgroundIntensity = 0.1;
 const earthParameters = {};
 earthParameters.atmosphereDayColor = '#00aaff';
 earthParameters.atmosphereTwilightColor = '#ff6600';
+if (gui) {
+  gui.addColor(earthParameters, 'atmosphereDayColor').onChange(() => {
+    earthMaterial.uniforms.uAtmosphereDayColor.value.set(
+      earthParameters.atmosphereDayColor
+    );
+    atmosphereMaterial.uniforms.uAtmosphereDayColor.value.set(
+      earthParameters.atmosphereDayColor
+    );
+  });
 
-gui.addColor(earthParameters, 'atmosphereDayColor').onChange(() => {
-  earthMaterial.uniforms.uAtmosphereDayColor.value.set(
-    earthParameters.atmosphereDayColor
-  );
-  atmosphereMaterial.uniforms.uAtmosphereDayColor.value.set(
-    earthParameters.atmosphereDayColor
-  );
-});
-
-gui.addColor(earthParameters, 'atmosphereTwilightColor').onChange(() => {
-  earthMaterial.uniforms.uAtmosphereTwilightColor.value.set(
-    earthParameters.atmosphereTwilightColor
-  );
-  atmosphereMaterial.uniforms.uAtmosphereTwilightColor.value.set(
-    earthParameters.atmosphereTwilightColor
-  );
-});
-
+  gui.addColor(earthParameters, 'atmosphereTwilightColor').onChange(() => {
+    earthMaterial.uniforms.uAtmosphereTwilightColor.value.set(
+      earthParameters.atmosphereTwilightColor
+    );
+    atmosphereMaterial.uniforms.uAtmosphereTwilightColor.value.set(
+      earthParameters.atmosphereTwilightColor
+    );
+  });
+}
 const earthDayTexture = textureLoader.load('./earth/day.jpg');
 const earthNightTexture = textureLoader.load('./earth/night.jpg');
 const earthSpecularCloudsTexture = textureLoader.load(
@@ -134,9 +136,10 @@ const updateSun = () => {
 };
 updateSun();
 // tweaks
-gui.add(sunSpherical, 'phi').min(0).max(Math.PI).onChange(updateSun);
-gui.add(sunSpherical, 'theta').min(-Math.PI).max(Math.PI).onChange(updateSun);
-
+if (gui) {
+  gui.add(sunSpherical, 'phi').min(0).max(Math.PI).onChange(updateSun);
+  gui.add(sunSpherical, 'theta').min(-Math.PI).max(Math.PI).onChange(updateSun);
+}
 /**
  * Sizes
  */
