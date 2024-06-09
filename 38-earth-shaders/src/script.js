@@ -27,7 +27,7 @@ const environmentMap = textureLoader.load('./milkyway/milkyway.png');
 environmentMap.mapping = THREE.EquirectangularReflectionMapping;
 environmentMap.colorSpace = THREE.SRGBColorSpace;
 scene.background = environmentMap;
-scene.backgroundIntensity = 0.25;
+scene.backgroundIntensity = 0.1;
 
 /**
  * Earth
