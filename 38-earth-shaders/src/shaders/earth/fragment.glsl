@@ -1,7 +1,9 @@
 uniform sampler2D uDayTexture;
 uniform sampler2D uNightTexture;
 uniform sampler2D uSpecularCloudsTexture;
-
+uniform vec3 uSunDirection;
+uniform vec3 uAtmosphereDayColor;
+uniform vec3 uAtmosphereTwilightColor;
 
 varying vec2 vUv;
 varying vec3 vNormal;
@@ -15,16 +17,46 @@ void main()
     vec3 color = vec3(0.0);
 
     // sun orientation
-    vec3 uSunDirection = vec3(0.0, 0.0, 1.0);
     float sunOrientation = dot(uSunDirection, normal);
 
     // Day / Night
+    float dayMix = smoothstep(- 0.25, 0.5, sunOrientation); // spread out the shadow a bit
     vec3 dayColor = texture(uDayTexture, vUv).rgb;
     vec3 nightColor = texture(uNightTexture, vUv).rgb;
-
-    // mix day and night absed on sun orientation
-    float dayMix = smoothstep(- 0.25, 0.5, sunOrientation); // spread out the shadow a bit
     color = mix(nightColor, dayColor, dayMix);
+
+    // specular clouds color
+    vec2 specularCloudsColor = texture(uSpecularCloudsTexture, vUv).rg;
+    float cloudsMix = smoothstep(0.3, 1.0, specularCloudsColor.g);
+    cloudsMix *= dayMix;
+    // reduce alpha when in darkside
+    color = mix(color, vec3(1.0), cloudsMix);
+
+    // Fresnel
+    // we need a high value on the edge so use fresnel
+    float fresnel = dot(viewDirection, normal) + 1.0;
+    fresnel = pow(fresnel, 2.0);
+
+    // mix atmospheres based on sun incidence
+    float atmosphereDayMix = smoothstep(- 0.5, 1.0, sunOrientation);
+    vec3 atmosphereColor = mix(uAtmosphereTwilightColor, uAtmosphereDayColor, atmosphereDayMix);    
+    color = mix(color, atmosphereColor, fresnel * atmosphereDayMix);
+
+    // specular (sun lense flare)
+    vec3 reflection = reflect(- uSunDirection, normal); 
+    // if reflection & view direction are aligned value ^ else v
+    float specular = - dot(reflection, viewDirection);
+    specular = max(specular, 0.0);
+    specular = pow(specular, 32.0);
+    specular *= specularCloudsColor.r;
+    vec3 specularColor = mix(vec3(1.0), atmosphereColor, fresnel);
+    color += specular * specularColor;
+
+    // volumetric atmosphere
+    // slightly bigger sphere and make it fade with fresnel
+    
+
+
     // Final color
     gl_FragColor = vec4(color, 1.0);
     #include <tonemapping_fragment>
