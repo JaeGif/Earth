@@ -6,18 +6,18 @@ uniform vec3 uAtmosphereDayColor;
 uniform vec3 uAtmosphereTwilightColor;
 
 varying vec2 vUv;
-varying vec3 vNormal;
+varying vec3 vNormalVertex;
 varying vec3 vPosition;
 
 void main()
 {
 
     vec3 viewDirection = normalize(vPosition - cameraPosition);
-    vec3 normal = normalize(vNormal);
+    vec3 newNormal = normalize(vNormalVertex);
     vec3 color = vec3(0.0);
 
     // sun orientation
-    float sunOrientation = dot(uSunDirection, normal);
+    float sunOrientation = dot(uSunDirection, newNormal);
 
     // Day / Night
     float dayMix = smoothstep(- 0.25, 0.5, sunOrientation); // spread out the shadow a bit
@@ -34,7 +34,7 @@ void main()
 
     // Fresnel
     // we need a high value on the edge so use fresnel
-    float fresnel = dot(viewDirection, normal) + 1.0;
+    float fresnel = dot(viewDirection, newNormal) + 1.0;
     fresnel = pow(fresnel, 2.0);
 
     // mix atmospheres based on sun incidence
@@ -43,7 +43,7 @@ void main()
     color = mix(color, atmosphereColor, fresnel * atmosphereDayMix);
 
     // specular (sun lense flare)
-    vec3 reflection = reflect(- uSunDirection, normal); 
+    vec3 reflection = reflect(- uSunDirection, newNormal); 
     // if reflection & view direction are aligned value ^ else v
     float specular = - dot(reflection, viewDirection);
     specular = max(specular, 0.0);
@@ -52,13 +52,9 @@ void main()
     vec3 specularColor = mix(vec3(1.0), atmosphereColor, fresnel);
     color += specular * specularColor;
 
-    // volumetric atmosphere
-    // slightly bigger sphere and make it fade with fresnel
-    
-
 
     // Final color
-    gl_FragColor = vec4(color, 1.0);
+    csm_DiffuseColor = vec4(color, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
 }

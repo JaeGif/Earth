@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import GUI from 'lil-gui';
+import CustomShaderMaterial from 'three-custom-shader-material/vanilla';
+
 import earthVertexShader from './shaders/earth/vertex.glsl';
 import earthFragmentShader from './shaders/earth/fragment.glsl';
 
@@ -62,6 +64,7 @@ const earthNightTexture = textureLoader.load('./earth/night.jpg');
 const earthSpecularCloudsTexture = textureLoader.load(
   './earth/specularClouds.jpg'
 );
+const earthNormalTexture = textureLoader.load('./earth/earthNormal.png');
 
 earthDayTexture.colorSpace = THREE.SRGBColorSpace;
 earthNightTexture.colorSpace = THREE.SRGBColorSpace;
@@ -73,10 +76,17 @@ earthSpecularCloudsTexture.anisotropy = 8;
 // anisotropy can have a performance impact
 // 8 is decent, 4 covers all devices
 
-const earthGeometry = new THREE.SphereGeometry(2, 64, 64);
-const earthMaterial = new THREE.ShaderMaterial({
+// add ambient light cause physical material
+const ambientLight = new THREE.AmbientLight('#fff', 1);
+
+scene.add(ambientLight);
+const earthGeometry = new THREE.SphereGeometry(2, 128, 128);
+const earthMaterial = new CustomShaderMaterial({
+  baseMaterial: THREE.MeshStandardMaterial,
+
   vertexShader: earthVertexShader,
   fragmentShader: earthFragmentShader,
+  normalMap: earthNormalTexture,
   uniforms: {
     uDayTexture: new THREE.Uniform(earthDayTexture),
     uNightTexture: new THREE.Uniform(earthNightTexture),
@@ -123,13 +133,15 @@ const debugSun = new THREE.Mesh(
   new THREE.IcosahedronGeometry(0.1, 2),
   new THREE.MeshBasicMaterial({ color: 'white' })
 );
+const sunLight = new THREE.DirectionalLight('#fff', 2);
 
+scene.add(sunLight);
 scene.add(debugSun);
 const updateSun = () => {
   // sun direction
   sunDirection.setFromSpherical(sunSpherical);
   debugSun.position.copy(sunDirection).multiplyScalar(5);
-
+  sunLight.position.copy(sunDirection).multiplyScalar(5);
   // uniforms
   earthMaterial.uniforms.uSunDirection.value.copy(sunDirection);
   atmosphereMaterial.uniforms.uSunDirection.value.copy(sunDirection);
